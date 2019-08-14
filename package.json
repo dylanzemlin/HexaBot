@@ -1,0 +1,32 @@
+{
+  "name": "hexabot",
+  "version": "1.0.0",
+  "description": "A discord bot built for private discords",
+  "main": "main.ts",
+  "scripts": {
+    "build": "echo building... && yarn run build:lint && yarn run build:ts && echo done!",
+    "build:ts": "tsc",
+    "build:lint": "tslint \"src/**/*.ts\" -e \"**/*.d.ts\"",
+    "clean": "rm -rf bin/",
+    "start": "node bin/main.js",
+    "start:pretty": "node bin/main.js",
+    "start:dev": "yarn run clean && yarn && nodemon -x 'yarn run build && yarn run start:pretty' --watch src/ -L -e ts",
+    "uninstall": "rm -rf node_modules/ && yarn run clean",
+    "prettify": "find ./src/**/ -name \\*.tsx -o -name \\*.ts -o -name //*.css| xargs prettier --find-config-path --write",
+    "precommit": "lint-staged",
+    "test:unit": "jest --collectCoverage"
+  },
+  "author": "Dylan Zemlin",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^12.7.1",
+    "discord.js": "^11.5.1",
+    "dotenv": "^8.0.0",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "nodemon": "^1.19.0"
+  }
+}

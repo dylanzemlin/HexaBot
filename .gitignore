@@ -1,0 +1,7 @@
+# Node folders
+node_modules/
+bin/
+
+# Ignore logs and .env
+logs.txt*
+.env
