@@ -3,7 +3,6 @@ import { HexaRank } from '../Structures/HexaRank'
 
 export interface ICommand
 {
-    prefix?: string;
     triggers?: Array<String>;
     rank?: HexaRank;
     help?: string;
