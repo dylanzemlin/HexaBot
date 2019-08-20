@@ -27,7 +27,8 @@ export default class VoiceController
         return this._instance;
     }
 
-    private queue: QItem[] = [];
+
+    public queue: QItem[] = [];
 
     private playing: boolean = false;
     private dispatcher: StreamDispatcher | undefined;
@@ -49,30 +50,39 @@ export default class VoiceController
         }
     }
 
+    public stop()
+    {
+        this.queue = [];
+        if(this.dispatcher && this.playing)
+        {
+            this.dispatcher.end("forced");
+        }
+        this.playing = false;
+    }
+
+    public togglePause(p: boolean)
+    {
+        if(!this.dispatcher)
+            return;
+
+        if(p)
+        {
+            this.dispatcher.pause();
+        } else {
+            this.dispatcher.resume();
+        }
+    }
+
     public skip()
     {
-        if(this.dispatcher)
-        {
-            if(this.queue.length == 0)
-            {
-                if(this.dispatcher)
-                {
-                    this.dispatcher.end();
-                    this.dispatcher = undefined;
-                }
-            } else {
-                this.nextSong();
-            }
-        }
+        this.nextSong();
     }
 
     public async nextSong()
     {
         if(this.dispatcher)
         {
-            this.dispatcher.end();
-            this.dispatcher.destroyed = true;
-            this.dispatcher = undefined;
+            this.dispatcher.end("forced");
         }
 
         if(this.queue.length == 0)
@@ -98,10 +108,8 @@ export default class VoiceController
 
         this.playing = true;
 
-
-
         const ytdl = require('ytdl-core');
-        this.dispatcher = this.voice.playStream(ytdl(next.info.video_url, {filter: "audioonly"}));
+        this.dispatcher = await this.voice.playStream(ytdl(next.info.video_url, {filter: "audioonly"}));
         this.dispatcher.setVolume(this.volume);
 
         DiscordConnection.client.user.setPresence(
@@ -113,8 +121,15 @@ export default class VoiceController
             }
         });
 
-        this.dispatcher.on('finish', () => {
-            this.nextSong();
+        this.dispatcher.on('end', reason => {
+            this.dispatcher = undefined;
+            if(reason != "forced") this.nextSong();
         });
+
+        this.dispatcher.on('error', reason => {
+            console.error(`VoiceController Error : ${reason.message}`);
+            this.dispatcher = undefined;
+            this.nextSong();
+        })
     }
 }

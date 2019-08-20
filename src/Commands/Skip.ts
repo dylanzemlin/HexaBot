@@ -5,8 +5,7 @@ import VoiceController from "../Controllers/VoiceController";
 
 export default class Clear implements ICommand
 {
-    prefix?: string  = "!"; 
-    triggers?: String[]  = ["clear"];
+    triggers?: String[]  = ["skip"];
     rank?: HexaRank = HexaRank.Owner;
     help?: string  = "Clears the current channel with params: <how many, -1 for all> <time between>";
     redacted?: boolean  = false;

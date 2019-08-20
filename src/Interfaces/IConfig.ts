@@ -8,6 +8,7 @@ interface IConfig
     commands?: string[];
     prefix?: string;
     token?: string;
+    key?: string;
 }
 
 const config: IConfig = {
@@ -15,9 +16,10 @@ const config: IConfig = {
     ? process.env.COMMANDS.split(',') || []
     : [],
     prefix: process.env.PREFIX,
-    token: process.env.TOKEN
+    token: process.env.TOKEN,
+    key: process.env.KEY
 }
 
-console.log("Loaded: " + config);
+console.log("Loaded: " + JSON.stringify(config));
 
 export default config;

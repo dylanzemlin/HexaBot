@@ -13,12 +13,18 @@ export default class MessageManager
         const command = splitter[0];
         for(const cmdName of config.commands || [])
         {
-            if(command.toLocaleLowerCase() == (config.prefix + cmdName).toLocaleLowerCase())
-            {
-                const cmdClass = require('./' + cmdName).default;
-                const command = new cmdClass() as ICommand;
+            const cmdClass = require('./' + cmdName).default;
+            const cmd = new cmdClass() as ICommand;
 
-                command.run(message);
+            if(cmd.triggers)
+            {
+                for(const beep of cmd.triggers)
+                {
+                    if(config.prefix && (config.prefix + beep).toLocaleLowerCase() == command.toLocaleLowerCase())
+                    {
+                        cmd.run(message);
+                    }
+                }
             }
         }
     }

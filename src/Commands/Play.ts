@@ -50,7 +50,6 @@ export default class Play implements ICommand
 {
     static results: Map<string, RootResponse> = new Map();
 
-    prefix?: string  = "!"; 
     triggers?: String[]  = ["play"];
     rank?: HexaRank = HexaRank.Regular;
     help?: string  = `${config.prefix}play <url:search> (optional)<channel id> | play <search id>`;
@@ -116,7 +115,7 @@ export default class Play implements ICommand
                 }
 
                 console.log("Searching: " + meme);
-                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=type&maxResults=5&q=(${meme})&key=AIzaSyCdIg7eMc-fv6EqU10UB_PuWtnb0gu7Ru0`;
+                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=type&maxResults=5&q=(${meme})&key=${config.key}`;
                 var options = {uri: searchUrl};
                 const result = await request.get(options);
 
