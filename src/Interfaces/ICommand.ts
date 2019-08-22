@@ -3,10 +3,10 @@ import { HexaRank } from '../Structures/HexaRank'
 
 export interface ICommand
 {
-    triggers?: Array<String>;
-    rank?: HexaRank;
-    help?: string;
-    redacted?: boolean;
+    triggers: Array<String>;
+    rank: HexaRank;
+    help: string;
+    redacted: boolean;
 
     run(message: Message): void;
 }

@@ -7,6 +7,7 @@ import {
     Channel,
     AudioPlayer,
     PresenceData,
+    GuildMember,
 } from 'discord.js';
 import * as ytdl from 'ytdl-core';
 import { isBuffer } from 'util';
@@ -16,6 +17,7 @@ interface QItem
 {
     voice: VoiceChannel;
     info: ytdl.videoInfo;
+    requester: GuildMember;
 }
 
 export default class VoiceController
@@ -35,9 +37,20 @@ export default class VoiceController
     private voice: VoiceConnection | undefined;
     private volume: number = 0.5;
 
-    public Request(voiceChannel: VoiceChannel, info: ytdl.videoInfo)
+    private currentSong: QItem | undefined;
+
+    public get getPlayingSong()
     {
-        this.queue.push(<QItem>{ voice: voiceChannel, info: info });
+        return this.currentSong;
+    }
+
+    public get getQueue(){
+        return this.queue;
+    }
+
+    public Request(voiceChannel: VoiceChannel, info: ytdl.videoInfo, member: GuildMember)
+    {
+        this.queue.push(<QItem>{ voice: voiceChannel, info: info, requester: member });
         if(!this.playing)
             this.nextSong();
     }
@@ -80,6 +93,7 @@ export default class VoiceController
 
     public async nextSong()
     {
+        this.currentSong = undefined;
         if(this.dispatcher)
         {
             this.dispatcher.end("forced");
@@ -87,6 +101,8 @@ export default class VoiceController
 
         if(this.queue.length == 0)
         {
+
+
             this.playing = false;
             DiscordConnection.client.user.setPresence(<PresenceData>{status: "online"});
             return;
@@ -112,6 +128,8 @@ export default class VoiceController
         this.dispatcher = await this.voice.playStream(ytdl(next.info.video_url, {filter: "audioonly"}));
         this.dispatcher.setVolume(this.volume);
 
+        this.currentSong = next;
+
         DiscordConnection.client.user.setPresence(
         {
             status: "online",
@@ -123,12 +141,14 @@ export default class VoiceController
 
         this.dispatcher.on('end', reason => {
             this.dispatcher = undefined;
+            this.currentSong = undefined;
             if(reason != "forced") this.nextSong();
         });
 
         this.dispatcher.on('error', reason => {
             console.error(`VoiceController Error : ${reason.message}`);
             this.dispatcher = undefined;
+            this.currentSong = undefined;
             this.nextSong();
         })
     }

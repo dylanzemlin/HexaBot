@@ -5,16 +5,15 @@ console.log("Loading config");
 
 interface IConfig
 {
-    commands?: string[];
+    protocol?: string;
     prefix?: string;
     token?: string;
     key?: string;
+    
 }
 
 const config: IConfig = {
-    commands: process.env.COMMANDS
-    ? process.env.COMMANDS.split(',') || []
-    : [],
+    protocol: process.env.PROTOCOL,
     prefix: process.env.PREFIX,
     token: process.env.TOKEN,
     key: process.env.KEY

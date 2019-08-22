@@ -35,5 +35,13 @@
     "@types/dotenv": "^6.1.1",
     "@types/request-promise-native": "^1.0.16",
     "nodemon": "^1.19.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DylanSMR/HexaBot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DylanSMR/HexaBot/issues"
+  },
+  "homepage": "https://github.com/DylanSMR/HexaBot#readme"
 }

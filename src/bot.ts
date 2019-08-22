@@ -17,7 +17,7 @@ export default class DiscordConnection
 
         this._client.on('message', (message) => {
            console.log(message.content);
-           manager.Handle(message);
+           manager.instance.Handle(message);
         });
 
         this._client.login(config.token).then(token => console.log("Logged Into Discord")).catch(console.error);
