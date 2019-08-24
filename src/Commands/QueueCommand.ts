@@ -53,12 +53,12 @@ export default class QueueCommand implements ICommand
             queue.forEach(x => {
                 parsedString += `\n[${index + 1}] **${x.info.title}** requested by **${x.requester.displayName}** \`(${this.secondsToHms(x.info.length_seconds)})\``;
             });
-            parsedString += "\n\nRemaining Queue Length: (\`" + time + "\`)";
+            parsedString += "\n\nRemaining Queue Length: \`(" + time + ")\`";
 
             if(parsedString.length == 0)
                 return;
 
-            await message.channel.sendMessage(parsedString);
+            await message.reply(parsedString);
             await message.delete();
         }
     }

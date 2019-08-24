@@ -9,8 +9,7 @@ import {
     PresenceData,
     GuildMember,
 } from 'discord.js';
-import * as ytdl from 'ytdl-core';
-import { isBuffer } from 'util';
+import ytdl = require('ytdl-core');
 import DiscordConnection from '../bot';
 
 interface QItem
@@ -86,6 +85,19 @@ export default class VoiceController
         }
     }
 
+    public async seek(t: number)
+    {
+        if(!this.dispatcher)
+            return;
+        if(!this.voice)
+            return;
+        if(!this.currentSong)
+            return;
+
+        this.dispatcher.end("seek");
+        this.dispatcher = await this.voice.playStream(ytdl(this.currentSong.info.video_url, {filter: "audioonly"}), {seek: t, volume: this.volume});
+    }
+
     public skip()
     {
         this.nextSong();
@@ -101,10 +113,8 @@ export default class VoiceController
 
         if(this.queue.length == 0)
         {
-
-
             this.playing = false;
-            DiscordConnection.client.user.setPresence(<PresenceData>{status: "online"});
+            DiscordConnection.client.user.setPresence(<PresenceData>{status: "online", game: undefined});
             return;
         }
 
@@ -141,8 +151,8 @@ export default class VoiceController
 
         this.dispatcher.on('end', reason => {
             this.dispatcher = undefined;
-            this.currentSong = undefined;
-            if(reason != "forced") this.nextSong();
+            if(reason != "seek") this.currentSong = undefined;
+            if(reason != "forced" && reason != "seek") this.nextSong();
         });
 
         this.dispatcher.on('error', reason => {

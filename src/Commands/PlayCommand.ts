@@ -4,49 +4,10 @@ import { HexaRank } from '../Structures/HexaRank'
 import config from '../Interfaces/IConfig';
 import * as ytdl from 'ytdl-core';
 import VoiceController from "../Controllers/VoiceController";
-import * as request from "request-promise-native"
+import logger from "../logger";
+import YoutubeController from "../Controllers/YoutubeController";
 
 // Todo: Clean this up, put classes in other files, create a youtube search class, etc
-
-interface RootResponse
-{
-    kind?: string;
-    etag?: string;
-    nextPageToken?: string;
-    regionCode ?: string;
-
-    pageInfo?: PageInfo;
-    items?: Array<YoutubeItem>;
-}
-
-interface PageInfo
-{
-    totalResults?: number;
-    resultsPerPage?: number;
-}
-
-interface YoutubeID
-{
-    kind?: string;
-    videoId: string;
-}
-
-interface YoutubeSnippet
-{
-    channelId?: string;
-    title?: string;
-    description?: string;
-    channelTitle?: string;
-    liveBroadcastContent?: string;
-}
-
-interface YoutubeItem 
-{
-    kind?: string;
-    etag?: string;
-    id: YoutubeID;
-    snippet: YoutubeSnippet;
-}
 
 export default class PlayCommand implements ICommand
 {
@@ -56,103 +17,84 @@ export default class PlayCommand implements ICommand
     rank: HexaRank = HexaRank.Regular;
     help: string  = `${config.prefix}play <url:search> (optional)<channel id> | play <search id>`;
     redacted: boolean  = false;
+
+    test: RegExp = new RegExp('^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+'); // The testing regex to see if its a valid youtube url
+
     async run(message: Message): Promise<void> {
         const args: string[] = message.content.split(/ +/);
-        const untouchedArgs = Object.assign([], args); // Clone the orig
-        if(untouchedArgs.length <= 1) // 1 for command, 2 for url, 3 for send channel
+        if(args.length <= 1) // 1 for command, 2 for url, 3 for send channel
         {
-            message.reply("Invalid syntax for this command! `!play <url:search> (optional)<channel id>");
+            message.reply(`Invalid syntax for this command! ${config.prefix}play <url:sarch query>`);
             return;
         }
+
+        let queryString = args.slice(1, args.length).join(" ");
         if(message.member.voiceChannel)
         {
-            const test: RegExp = new RegExp('^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+');
-            const meme = args.splice(1, args.length).join(" ");
-            if(meme.match(test))
+            let match = queryString.match(this.test);
+            if(match)
             {
-                // Play it! We detected a youtube url
-                const info = await ytdl.getInfo(args[1]);
-                if(info)
+                if(match.length >= 1) // We only have a url
                 {
-                    VoiceController.instance.Request(message.member.voiceChannel, info, message.member);
-                    message.reply(`Added ${info.title} to the queue!`);
-                } else {
-                    message.reply("Invalid youtube url :(");
-                }
-            } else {
-                if(untouchedArgs.length == 2)
-                {
-                    const num = parseInt(untouchedArgs[1], 10);
-                    if(num > 0 && num < 6)
-                    {
-                        // we got ourselves a play bois
-                        if(PlayCommand.results.has(message.member.user.id))
-                        {
-                            let index = 0;
+                    const info = await ytdl.getInfo(args[1]);
+                    if(info)
+                        VoiceController.instance.Request(message.member.voiceChannel, info, message.member);
+                    else
+                        message.reply("You must provide a valid Youtube URL or search query to use the play command!");
 
-                            for (let entry of PlayCommand.results.entries()) {
-                                console.log(entry[0] + ":" + entry[1]);
-                                if(entry[0] == message.member.user.id)
-                                {
-                                    if(entry[1].items){
-                                        for (let x of entry[1].items) {
-                                            console.log(x.snippet.title + `[${index}]`);
-                                            if(index == num - 1)
-                                            {
-                                                const info = await ytdl.getInfo(entry[1].items[index].id.videoId);
-                                                VoiceController.instance.Request(message.member.voiceChannel, info, message.member);
-                                                message.reply(`Added ${info.title} to the queue!`);          
-                                                return;                      
-                                            } else {
-                                                index++;
-                                            }
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        return;
-                    }
-                }
-
-                console.log("Searching: " + meme);
-                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=type&maxResults=5&q=(${meme})&key=${config.key}`;
-                var options = {uri: searchUrl};
-                const result = await request.get(options);
-
-                console.log("Youtube Result: ");
-                let parsedResult = JSON.parse(result);
-                var object = <RootResponse>(parsedResult);
-
-                if(PlayCommand.results.has(message.member.user.id))
-                {
-                    PlayCommand.results.delete(message.member.user.id);
-                }
-
-                PlayCommand.results.set(message.member.user.id,  object);
-
-                if(object.items)
-                {
-                    const embed = new RichEmbed();
-                    embed.setTitle("Youtube Search Results");
-                    embed.setColor(0xFF0000);
-            
-                    let text = "";
-                    let index = 0;
-                    for(const item of object.items)
-                    {
-                        index++;
-                        text += `[${index}] ${item.snippet.title}\n`;
-                    }
-                    embed.addField("Songs", text, true);
-                    embed.setAuthor("DylaNSMR");
-                    await message.delete();
-                    message.reply(embed);
+                    return;
                 }
             }
-        } else {
-            message.reply("You must be in or specify a voice channel to use this command! See !help for more info");
+
+            logger.debug(`Search args with ${args.length} of ${JSON.stringify(args)}`);
+            if(args.length == 2)
+            {
+                const num = parseInt(args[1], 10);
+                if(num > 0 && num < 6)
+                {
+                    const results = YoutubeController.instance.resultsFromId(message.member.id);
+                    if(results == undefined)
+                        await message.reply("You must use the play command first!");
+                    else {
+                        if(!results.items)
+                        {
+                            await message.reply("There was an error using your existing search results. Please try to search again");
+                        } else {
+                            logger.debug("Found " + results.items.length);
+                            if(num <= results.items.length && num > 0)
+                            {
+                                const info = await ytdl.getInfo(`https://www.youtube.com/watch?v=${results.items[num - 1].id.videoId}`);
+                                VoiceController.instance.Request(message.member.voiceChannel, info, message.member);
+                            } else {
+                                await message.reply(`You must provide a number 1 through ${results.items.length} to use that command! If you would like to see your results, use the results command!`);
+                            }
+                        }
+                    }
+
+                    return;
+                }
+            }
+
+            const results = await YoutubeController.instance.GetResults(queryString, message.member);
+            if(!results || !results.items)
+            {
+                await message.reply("There was an error searching youtube for that query! Please try again later");
+            } else {
+                if(results == 0)
+                {
+                    await message.reply(`There is nothing on youtube with the query \"${queryString}\"`);
+                } else {
+                    let response = `Showing ${results.items.length > 5 ? 5 : 1} out of ${results.items.length} results:\n\n`;
+                    for(let i = 0; i < results.items.length; i++)
+                    {
+                        if(i >= 5)
+                            break;
+
+                        response += `\`[${i +  1}]\` ***${results.items[i].snippet.title}***\n`;
+                    }
+                    await message.reply(response);
+                }
+            }
         }
     }
 } 

@@ -8,6 +8,7 @@ import PlayCommand from './PlayCommand';
 import SkipCommand from './SkipCommand';
 import VolumeCommand from './VolumeCommand';
 import QueueCommand from './QueueCommand';
+import SeekCommand from './SeekCommand';
 
 export default class MessageManager
 {
@@ -27,6 +28,7 @@ export default class MessageManager
                 this.commands.push(new PlayCommand());
                 this.commands.push(new SkipCommand());
                 this.commands.push(new VolumeCommand());
+                this.commands.push(new SeekCommand());
             break;
 
             case "multi": // Used for my window ubuntu system
@@ -36,6 +38,7 @@ export default class MessageManager
                 this.commands.push(new SkipCommand());
                 this.commands.push(new VolumeCommand());
                 this.commands.push(new QueueCommand());
+                this.commands.push(new SeekCommand());
             break;
         }
     }

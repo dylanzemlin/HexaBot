@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  p-hexabot-text:
+    build: .
+    image: p-hexabot-text
+    environment:
+      - PROTOCOL=text
+    env_file:
+      - .env
+
+  p-hexabot-voice:
+    build: .
+    image: p-hexabot-voice
+    environment:
+      - PROTOCOL=voice
+    env_file:
+      - .env

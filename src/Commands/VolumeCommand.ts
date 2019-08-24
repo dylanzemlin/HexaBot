@@ -23,5 +23,8 @@ export default class VolumeCommand implements ICommand
             volume = 100;
 
         VoiceController.instance.setVol(volume / 100.0 / 2.0);
+
+        await message.reply("Setting the voice volume to " + volume + "%");
+        await message.delete();
     }
 } 
